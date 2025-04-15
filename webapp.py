@@ -183,6 +183,9 @@ else:
     def delete_user(Email):
         c.execute("DELETE FROM userstable WHERE Email="+"'"+Email+"'")
         conn.commit()
+    def check_email_exists(email):
+        c.execute("SELECT * FROM userstable WHERE Email = ?", (email,))
+        return c.fetchone() is not None
     
     
     menu = ["Home","Login","SignUp"]
@@ -221,10 +224,8 @@ else:
                         st.success("Logged In as {}".format(Email))
                         
                         choic = st.selectbox("Select Parameters",["Soil","Weather","All"])
-                        menu2 = ["K-Nearest Neighbors", "SVM",
-                                 "Decision Tree", "Random Forest",
-                                 "Naive Bayes","ExtraTreesClassifier","VotingClassifier"]
-                        choice2 = st.selectbox("Select ML",menu2)
+                        menu2 = st.text("VotingClassifier")
+                        
                         if choic=="Soil":
                             N=float(st.slider('N Value', 0.0, 140.0))
                             P=float(st.slider('P Value', 5.0, 145.0))
@@ -254,36 +255,13 @@ else:
                             model=pickle.load(sfile)
                             tdata=[N,P,K,temp,Hum,Ph,Rain]
                         b2=st.button("Recommand")
+                        b3 = st.button("Reset")
                         if b2:
-                            if choice2=="K-Nearest Neighbors":
-                                test_prediction = model[0].predict([tdata])
-                                query=test_prediction[0]
-                                st.success(query)
-                            if choice2=="SVM":
-                                test_prediction = model[1].predict([tdata])
-                                query=test_prediction[0]
-                                st.success(query)                 
-                            if choice2=="Decision Tree":
-                                test_prediction = model[2].predict([tdata])
-                                query=test_prediction[0]
-                                st.success(query)
-                            if choice2=="Random Forest":
-                                test_prediction = model[3].predict([tdata])
-                                query=test_prediction[0]
-                                st.success(query)
-                            if choice2=="Naive Bayes":
-                                test_prediction = model[4].predict([tdata])
-                                query=test_prediction[0]
-                                st.success(query)
-                            if choice2=="ExtraTreesClassifier":
-                                test_prediction = model[5].predict([tdata])
-                                query=test_prediction[0]
-                                st.success(query)
-                            if choice2=="VotingClassifier":
-                                test_prediction = model[6].predict([tdata])
-                                query=test_prediction[0]
-                                st.success(query)
-                                
+                            test_prediction = model[6].predict([tdata])
+                            query=test_prediction[0]
+                            st.success(query)
+                        if b3:
+                            st.experimental_rerun()           
                     else:
                         st.warning("Incorrect Email/Password")
             else:
@@ -305,10 +283,12 @@ else:
             if Password==CPassword:
                 if (pattern.match(Mname)):
                     if re.fullmatch(regex, Email):
-                        create_usertable()
-                        add_userdata(Fname,Lname,Mname,City,Email,Password,CPassword)
-                        st.success("SignUp Success")
-                        st.info("Go to Logic Section for Login")
+                        if check_email_exists(Email):
+                            st.warning("Email already exists. Try logging in.")
+                        else:
+                            add_userdata(Fname, Lname, Mname, City, Email, Password, CPassword)
+                            st.success("SignUp Success")
+                            st.info("Go to Login Section")
                     else:
                         st.warning("Not Valid Email")         
                 else:
